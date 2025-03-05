@@ -4,6 +4,7 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from stable_baselines3.common.policies import ActorCriticPolicy
 import gymnasium as gym
+import torch.nn.init as init
 
 class CustomLegPolicy(nn.Module):
     """Custom policy network that only controls the legs, keeping arm actions at zero."""
@@ -16,6 +17,8 @@ class CustomLegPolicy(nn.Module):
         self.fc2 = nn.Linear(hidden_dim, output_dim)  # Outputs actions for all joints
         self.activation = nn.ELU()
         self.last_activation = nn.Tanh()
+        self._initialize_weights()
+
     def forward(self, obs):
         x = self.activation(self.fc1(obs))
         actions = self.last_activation(self.fc2(x))
@@ -26,6 +29,14 @@ class CustomLegPolicy(nn.Module):
 
         # return torch.cat([leg_actions, arm_actions], dim=1)  # Merge outputs
         return actions
+
+    def _initialize_weights(self):
+        """Initialize the last layer to output values near zero."""
+        init.kaiming_normal_(self.fc1.weight, nonlinearity='relu')  # Good for hidden layers
+        init.zeros_(self.fc1.bias)  # Set bias to zero
+
+        init.normal_(self.fc2.weight, mean=0.0, std=0.01)  # Small weight std
+        init.zeros_(self.fc2.bias)  # Zero bias ensures near-zero outputs
 
 class CNNExtractor(BaseFeaturesExtractor):
     """
@@ -80,7 +91,13 @@ class CNNExtractor(BaseFeaturesExtractor):
         
         features = self.fc(features)
         return features
-    
+
+def normal_init(m):
+    if isinstance(m, nn.Linear):  
+        torch.nn.init.normal_(m.weight, mean=0.0, std=1.0)  # Standard Normal
+        if m.bias is not None:
+            torch.nn.init.zeros_(m.bias)
+
 class CustomPolicy(ActorCriticPolicy):
     """PPO Policy using the Custom Leg Controller"""
 
@@ -92,9 +109,8 @@ class CustomPolicy(ActorCriticPolicy):
             input_dim=64, 
             output_dim=self.action_space.shape[0]
         )
+        
+        # self.apply(normal_init)  # Apply the initialization
 
-        # self.mlp_extractor = CNNExtractor(
-        #     observation_space = 1500,
-        #     features_dim=256,
-            
-        # )
+        with torch.no_grad():
+            self.log_std.data.fill_(-2) 
