@@ -5,6 +5,7 @@ from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from stable_baselines3.common.policies import ActorCriticPolicy
 import gymnasium as gym
 import torch.nn.init as init
+import numpy as np
 
 class CustomLegPolicy(nn.Module):
     """Custom policy network that only controls the legs, keeping arm actions at zero."""
@@ -17,7 +18,19 @@ class CustomLegPolicy(nn.Module):
         self.fc2 = nn.Linear(hidden_dim, output_dim)  # Outputs actions for all joints
         self.activation = nn.ELU()
         self.last_activation = nn.Tanh()
-        self._initialize_weights()
+        self.action_max = [
+            88,88,88,139,50,50,88,88,88,139,50,50,88,50,50,25,25,25,25,25,5,5,25,25,25,25,25,5,5
+        ]
+
+        fixed_actions = np.array([ 
+            5.81676149,   6.24023438,  -2.51686788, -10,   0.89736181, -1.86867142,   
+            5.31338787,  -6.59179688,   3.69140625,  -7.47070312, 3.66783547,  -2.27591777,   
+            0.16779119,   0.,           0.,
+            0.625,        1.875,        0.5625,      -0.6875,       0.25,       -0.234375,     0.14648438,
+            0.8125,      -2.125,       -0.5,         -0.4375,      -0.1875,      -0.15625,     -0.15625   ])
+        
+        estimated_action = np.divide(fixed_actions, self.action_max)
+        self._initialize_weights(estimated_action=estimated_action)
 
     def forward(self, obs):
         x = self.activation(self.fc1(obs))
@@ -30,13 +43,17 @@ class CustomLegPolicy(nn.Module):
         # return torch.cat([leg_actions, arm_actions], dim=1)  # Merge outputs
         return actions
 
-    def _initialize_weights(self):
-        """Initialize the last layer to output values near zero."""
-        init.kaiming_normal_(self.fc1.weight, nonlinearity='relu')  # Good for hidden layers
-        init.zeros_(self.fc1.bias)  # Set bias to zero
+    def _initialize_weights(self, estimated_action=None):
+        """Initialize weights with bias towards estimated actions."""
+        init.kaiming_normal_(self.fc1.weight, nonlinearity='relu')
+        init.zeros_(self.fc1.bias)
 
-        init.normal_(self.fc2.weight, mean=0.0, std=0.01)  # Small weight std
-        init.zeros_(self.fc2.bias)  # Zero bias ensures near-zero outputs
+        init.normal_(self.fc2.weight, mean=0.0, std=0.01)
+
+        if estimated_action is not None:
+            self.fc2.bias.data = torch.tensor(estimated_action, dtype=torch.float32)
+        else:
+            init.zeros_(self.fc2.bias) 
 
 class CNNExtractor(BaseFeaturesExtractor):
     """
