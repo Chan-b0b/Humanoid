@@ -391,13 +391,18 @@ class BasePolicy(BaseModel, ABC):
         actions[[15,18]] = 0 #future open-left arm
         actions[[22,25]] = 0 #future open-right arm
 
-        actions[[1,2,5]] = 0 #left leg
-        actions[[7,8,11]] = 0 #right leg
+        # actions[[1,2,5]] = 0 #left leg
+        # actions[[7,8,11]] = 0 #right leg
 
-        actions[0] = actions[6]
-        actions[3] = actions[9]
-        actions[4] = actions[10]
-        
+        # actions[1] = -actions[7]
+        # actions[2] = -actions[8]
+        # actions[0] = actions[6]
+        # actions[3] = actions[9]
+        # actions[4] = actions[10]
+        # actions[5] = actions[11]
+
+        # actions[15] = actions[22]
+        # actions[18] = actions[25]
         return actions, state  # type: ignore[return-value]
 
     def scale_action(self, action: np.ndarray) -> np.ndarray:
@@ -680,13 +685,18 @@ class ActorCriticPolicy(BasePolicy):
         actions[:, [15,18]] = 0 #future open-left arm
         actions[:, [22,25]] = 0 #future open-right arm
 
-        actions[:, [1,2,5]] = 0 #left leg
-        actions[:, [7,8,11]] = 0 #right leg
+        # actions[:, [1,2,5]] = 0 #left leg
+        # actions[:, [7,8,11]] = 0 #right leg
 
-        actions[:, 0] = actions[:,6]
-        actions[:, 3] = actions[:,9]
-        actions[:, 4] = actions[:,10]
-        # actions[:, 13] = actions[:,18]
+        # actions[:, 0] = actions[:,6]
+        # actions[:, 3] = actions[:,9]
+        # actions[:, 4] = actions[:,10]
+        # actions[:, 15] = actions[:, 22]
+        # actions[:, 18] = actions[:, 25]
+
+        # actions[:, 1] = -actions[:,7]
+        # actions[:, 2] = -actions[:,8]
+        # actions[:, 5] = actions[:,11]
 
         # fixed_actions = np.array([ -5.81676149,   6.24023438,  -2.51686788, -10,   0.89736181,
         #             -1.86867142,   5.31338787,  -6.59179688,   3.69140625,  -7.47070312,
@@ -736,6 +746,7 @@ class ActorCriticPolicy(BasePolicy):
         :return: Action distribution
         """
         mean_actions = self.action_net(latent_pi)
+        # self.log_std = th.clamp(self.log_std, min=-4, max=1) 
 
         if isinstance(self.action_dist, DiagGaussianDistribution):
             return self.action_dist.proba_distribution(mean_actions, self.log_std)
