@@ -275,7 +275,31 @@ class UnitreeG1Env(gym.Env):
 
         # return fall + tilt_penalty + pos_penalty
         return pos_penalty + joint_vel_penalty*0.2
-        
+
+        # if self.init_pos is None:
+        #     pos_penalty = 0
+        #     q_penalty = 0
+        #     ctrl_penalty = 0
+        #     tilt_penalty = 0
+        #     height_penalty = 0
+        # else:
+        #     pos_penalty = (abs(self.init_pos - self.pre_pos) - abs(self.init_pos - self.data.xpos)).mean()
+        #     q_penalty = (abs(self.init_q - self.pre_q) - abs(self.init_q - self.data.qpos)).mean()
+        #     height_penalty = abs(self.init_q[2] - self.pre_q[2]) - abs(self.init_q[2] - self.data.qpos[2])
+        #     self.pre_pos = deepcopy(self.data.xpos)
+        #     self.pre_q = deepcopy(self.data.qpos)
+
+        # # return fall + tilt_penalty + pos_penalty
+
+        # ctrl_penalty = -abs(self.data.ctrl).mean()
+
+        # self.pos_penalty = pos_penalty
+        # self.q_penalty = q_penalty
+        # self.ctrl_penalty = ctrl_penalty / 1000
+        # self.tilt_penalty = tilt_penalty / 1000
+        # self.height_penalty = height_penalty
+        # return self.height_penalty + self.pos_penalty + self.tilt_penalty
+    
     def _get_action_specification(self):
         """
         Getter for the action space specification.
