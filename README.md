@@ -43,3 +43,21 @@ sit
   0.00662565  0.          0.         -0.17712224  0.13370633 -0.04223645
   1.08972168  0.07841492  0.12131357  0.06781825 -0.27715445 -0.06634247
  -0.51665974  1.20389557 -0.13319468  0.13681483  0.16846114]
+
+
+ def check_foot_contact(sim):
+    left_foot_contact = False
+    right_foot_contact = False
+
+    for contact in sim.data.contact[: sim.data.ncon]:  # Loop through active contacts
+        geom1_name = sim.model.geom_id2name(contact.geom1)
+        geom2_name = sim.model.geom_id2name(contact.geom2)
+
+        # Check if foot is touching the ground
+        if "left_foot" in [geom1_name, geom2_name] and "ground" in [geom1_name, geom2_name]:
+            left_foot_contact = True
+        if "right_foot" in [geom1_name, geom2_name] and "ground" in [geom1_name, geom2_name]:
+            right_foot_contact = True
+
+    return left_foot_contact, right_foot_contact
+    
