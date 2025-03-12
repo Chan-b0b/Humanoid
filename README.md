@@ -60,4 +60,10 @@ sit
             right_foot_contact = True
 
     return left_foot_contact, right_foot_contact
+
+
+Host s112
+    HostName 175.106.97.112
+    Port 22
+    User training
     
